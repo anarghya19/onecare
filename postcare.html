@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OneCare Patient Portal – Post Care</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue-900: #050B24; --blue-500: #0B1956; --blue-100: #B3B8CB; --blue-50: #E7E8EE;
+      --sapphire-50: #ECF0F9; --lavender-100: #F8EFFA; --lavender-800: #746279; --lavender-900: #584B5C;
+      --grey-600: #2C2E2D; --grey-500: #303231; --grey-400: #595B5A; --grey-100: #CCCCCC; --grey-50: #EAEBEA;
+      --white: #FFFFFF;
+      --shadow-card: 0 4px 6px -1px rgba(0,0,0,.10), 0 2px 4px -2px rgba(0,0,0,.10);
+      --shadow-nav: 0px 1.558px 4.675px rgba(0,0,0,.1), 0px 1.558px 3.116px -1.558px rgba(0,0,0,.1);
+      --nav-height: 75px;
+      --sidebar-width: 260px;
+    }
+    body { font-family: 'Open Sans', sans-serif; background: var(--sapphire-50); color: var(--grey-600); min-height: 100vh; overflow-x: hidden; }
+
+    /* ══ PAGE LOAD ANIMATIONS ══ */
+    @keyframes fadeSlideDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeSlideLeft { from { opacity:0; transform:translateX(-24px); } to { opacity:1; transform:translateX(0); } }
+
+    /* ══ TOP NAV ══ */
+    .top-nav { position:fixed; top:0; left:0; right:0; height:var(--nav-height); background:#fff; box-shadow:var(--shadow-nav); display:flex; align-items:center; padding:0 24px 0 28px; z-index:100; animation:fadeSlideDown 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+    .logo-area { display:flex; align-items:center; gap:8px; flex-shrink:0; cursor:pointer; border-radius:8px; padding:4px; transition:background .18s; }
+    .logo-area:hover .logo-name .one, .logo-area:hover .logo-name .care, .logo-area:hover .logo-subtitle { color:#B3B8CB; }
+    .logo-svg-stroke { transition:stroke .18s; }
+    .logo-svg-fill { transition:fill .18s; }
+    .logo-area:hover .logo-svg-stroke { stroke:#B3B8CB; }
+    .logo-area:hover .logo-svg-fill { fill:#B3B8CB; }
+    .logo-name .one, .logo-name .care, .logo-subtitle { transition:color .18s; }
+    .logo-icon { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:36px; height:44px; }
+    .logo-text { display:flex; flex-direction:column; }
+    .logo-name { font-family:'Satoshi','Open Sans',sans-serif; font-size:28px; line-height:1; letter-spacing:-0.5px; }
+    .logo-name .one { font-weight:400; color:#0B1956; }
+    .logo-name .care { font-weight:700; color:#0B1956; }
+    .logo-subtitle { font-family:'Open Sans',sans-serif; font-size:14px; font-weight:400; color:#0B1956; line-height:1.4; }
+    .nav-center { flex:1; display:flex; justify-content:flex-start; padding-left:118px; }
+    .welcome-text { font-family:'Open Sans',sans-serif; font-weight:700; font-size:28px; line-height:40px; color:#0B1956; white-space:nowrap; }
+    .nav-right { display:flex; align-items:center; gap:16px; flex-shrink:0; margin-left:auto; }
+    .search-bar { display:flex; align-items:center; width:280px; height:44px; background:#EAEBEA; border-radius:28px; padding:0 16px; gap:8px; cursor:text; }
+    .search-input { flex:1; background:transparent; border:none; outline:none; padding:0; font-family:'Open Sans',sans-serif; font-size:14px; color:#49454F; }
+    .search-input::placeholder { color:#49454F; font-weight:600; }
+    .search-icon-btn { width:44px; height:44px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .bell-btn { width:44px; height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer; border-radius:50%; background:none; border:none; }
+
+    /* ══ HAMBURGER TOGGLE ══ */
+    .menu-toggle { display:none; flex-direction:column; justify-content:center; align-items:center; gap:5px; width:40px; height:40px; cursor:pointer; border:none; background:transparent; padding:4px; border-radius:8px; flex-shrink:0; transition:background .18s; }
+    .menu-toggle:hover { background:#f0f2f9; }
+    .menu-toggle span { display:block; width:22px; height:2px; background:#0B1956; border-radius:2px; transition:all .3s; }
+    .menu-toggle.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+    .menu-toggle.open span:nth-child(2) { opacity:0; }
+    .menu-toggle.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+
+    /* ══ SIDEBAR OVERLAY ══ */
+    .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:49; opacity:0; pointer-events:none; transition:opacity .3s; }
+    .sidebar-overlay.active { opacity:1; pointer-events:all; }
+
+    /* ══ SIDEBAR ══ */
+    .sidebar { position:fixed; left:0; top:var(--nav-height); width:var(--sidebar-width); height:calc(100vh - var(--nav-height)); background:#0B1956; box-shadow:0px 15.582px 23.373px -4.675px rgba(0,0,0,.1); display:flex; flex-direction:column; overflow:hidden; z-index:50; animation:fadeSlideLeft 0.5s cubic-bezier(0.22,1,0.36,1) 0.15s both; }
+    .sidebar-nav { padding:16px 16px 8px; display:flex; flex-direction:column; gap:2px; flex:1; }
+    .nav-item { display:flex; align-items:center; gap:14px; padding:12px 20px; height:auto; border-radius:10px; cursor:pointer; transition:background .18s; text-decoration:none; }
+    .nav-item.active { background:#fff; box-shadow:0px 15.582px 23.373px -4.675px rgba(0,0,0,.1); border-radius:8px; }
+    .nav-item:not(.active):hover { background:rgba(255,255,255,.08); border-radius:8px; }
+    .nav-icon { width:20px; height:20px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .nav-label { font-family:'Open Sans',sans-serif; font-weight:400; font-size:15px; line-height:24px; letter-spacing:.15px; color:#E7E8EE; }
+    .nav-item.active .nav-label { font-weight:700; color:#0B1956; }
+    .sidebar-footer { border-top:.866px solid #E5E7EB; padding:12px 16px; }
+    .user-info { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .user-avatar { width:48px; height:48px; background:#B3B8CB; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .user-details { display:flex; flex-direction:column; }
+    .user-name { font-family:'Open Sans',sans-serif; font-weight:700; font-size:16px; line-height:1.2; color:#fff; }
+    .user-id { font-family:'Open Sans',sans-serif; font-weight:400; font-size:13px; line-height:25px; color:#B3B8CB; }
+    .logout-btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:auto; padding:10px 16px; border:1px solid #fff; border-radius:10px; cursor:pointer; margin-bottom:12px; background:transparent; transition:background .18s,box-shadow .18s,transform .1s; }
+    .logout-btn:hover { background:rgba(255,255,255,.1); box-shadow:0 2px 10px rgba(0,0,0,.2); transform:translateY(-1px); }
+    .logout-btn:active { background:rgba(255,255,255,.18); transform:translateY(0); }
+    .logout-label { font-family:'Open Sans',sans-serif; font-weight:500; font-size:14px; line-height:24px; letter-spacing:.15px; color:#fff; }
+
+    /* ══ MAIN CONTENT ══ */
+    .main-content { margin-top: var(--nav-height); margin-left: var(--sidebar-width); padding: 32px 40px; min-height: calc(100vh - var(--nav-height)); }
+
+    /* JOURNEY CARD */
+    .journey-card { background: var(--white); border-radius: 12px; box-shadow: var(--shadow-card); padding: 20px; }
+    .journey-card h2 { font-size: 28px; font-weight: 700; color: var(--blue-500); }
+    .journey-card .subtitle { font-size: 14px; color: var(--grey-400); }
+    .journey-info-box { background: #FBF7FC; border-radius: 10px; padding: 16px 20px; font-size: 14px; color: var(--grey-600); line-height: 1.8; }
+
+    /* STAGE TABS */
+    .stage-tabs { background: #fff; border-radius: 10px; box-shadow: 0 2px 4px -1px rgba(0,0,0,.10), 0 1px 2px -1px rgba(0,0,0,.10); padding: 20px; height: 86.4px; }
+    .stage-tab { flex: 1; min-width: 110px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 14px; border: 1.5px solid var(--grey-100); border-radius: 10px; background: #fff; cursor: pointer; font-family: 'Open Sans', sans-serif; font-size: 14px; font-weight: 700; color: #364153; transition: border-color .15s, background .15s; white-space: nowrap; text-decoration: none; }
+    .stage-tab.active { background: #F8EFFA; border: 2px solid var(--lavender-800); color: var(--lavender-900); }
+    .stage-tab svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .stage-heading { font-size: 24px; font-weight: 700; color: var(--blue-500); }
+
+    /* SECTION CARD */
+    .section-card { background: var(--white); border-radius: 14px; box-shadow: var(--shadow-card); padding: 22px; }
+    .section-card-header { display: flex; align-items: center; gap: 10px; }
+    .section-card-header svg { width: 20px; height: 20px; color: var(--grey-500); flex-shrink: 0; }
+    .section-card-header h3 { font-size: 18px; font-weight: 700; color: var(--grey-600); margin: 0; }
+
+    /* MEDICATION */
+    .med-item { background: var(--sapphire-50); border-radius: 10px; padding: 14px 16px; }
+    .med-name { font-size: 14px; font-weight: 700; color: var(--grey-600); }
+    .med-info { font-size: 12px; color: var(--grey-400); margin-top: 2px; }
+
+    /* NUTRITION */
+    .nutrition-item { background: var(--sapphire-50); border-radius: 10px; padding: 14px 16px; }
+    .nutrition-label { font-size: 13px; font-weight: 700; color: var(--grey-600); margin-bottom: 3px; }
+    .nutrition-desc { font-size: 12px; color: var(--grey-400); line-height: 1.4; }
+    .nutrition-note { font-size: 12px; color: var(--grey-400); }
+
+    /* BUTTONS */
+    .btn-primary-custom { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 20px; border-radius: 9px; background: var(--blue-500); color: var(--white); font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none; transition: background .15s; }
+    .btn-primary-custom:hover { background: var(--blue-900); color: var(--white); }
+    .btn-primary-custom svg { width: 15px; height: 15px; }
+    .btn-outline-dark-custom { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 20px; border-radius: 9px; border: 1px solid var(--blue-900); background: var(--white); color: var(--blue-900); font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; transition: background .15s; }
+    .btn-outline-dark-custom:hover { background: var(--sapphire-50); color: var(--blue-900); }
+
+    /* TELE-CONSULTATION */
+    .consult-card { background: var(--sapphire-50); border-radius: 10px; padding: 16px; }
+    .consult-title { font-size: 14px; font-weight: 700; color: var(--grey-600); }
+    .consult-meta { font-size: 12px; color: var(--grey-400); margin-top: 2px; }
+    .badge-status { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-completed { background: #E8F5E9; color: #2E7D32; }
+    .badge-scheduled { background: var(--blue-50); color: var(--blue-500); }
+    .badge-pending { background: #FFF3E0; color: #E65100; }
+
+    /* COLLAPSIBLE */
+    .collapse-card { background: var(--white); border-radius: 14px; box-shadow: var(--shadow-card); overflow: hidden; }
+    .collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px; cursor: pointer; user-select: none; }
+    .collapse-header:hover { background: #fafafa; }
+    .collapse-header-left { display: flex; align-items: center; gap: 10px; }
+    .collapse-header-left svg { width: 20px; height: 20px; color: var(--grey-500); flex-shrink: 0; }
+    .collapse-header-left h3 { font-size: 18px; font-weight: 700; color: var(--grey-600); margin: 0; }
+    .chevron-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--sapphire-50); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    .chevron-btn svg { width: 16px; height: 16px; color: var(--grey-500); transition: transform .25s ease; }
+    .chevron-btn.open svg { transform: rotate(180deg); }
+    .collapse-body { padding: 0 22px 22px; }
+    .collapse-body p { font-size: 14px; color: var(--grey-500); line-height: 1.6; margin-bottom: 16px; }
+
+    /* DOWNLOAD POPUP */
+    .download-popup { position: fixed; top: 119px; left: calc(260px + ((100vw - 260px) / 2)); transform: translateX(-50%); background: white; padding: 14px 24px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.18); display: none; z-index: 9999; font-size: 15px; font-weight: 600; color: var(--blue-500); align-items: center; gap: 10px; white-space: nowrap; border-left: 4px solid var(--blue-500); }
+    .download-popup.show { display: flex; }
+    #pageContent.blur-bg { filter: blur(2px); pointer-events: none; }
+
+    /* ANIMATIONS */
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { opacity: 0; animation: fadeInUp 0.55s ease forwards; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.25s; }
+    .delay-3 { animation-delay: 0.4s; }
+    .delay-4 { animation-delay: 0.55s; }
+    .delay-5 { animation-delay: 0.7s; }
+    .delay-6 { animation-delay: 0.85s; }
+    .scroll-fade { opacity: 0; transform: translateY(24px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .scroll-fade.visible { opacity: 1; transform: translateY(0); }
+
+    /* SCHEDULER OVERLAY */
+    .scheduler-overlay { display: none; position: fixed; top: 75px; left: 260px; right: 0; bottom: 0; z-index: 8000; background: rgba(11,25,86,0.45); backdrop-filter: blur(3px); align-items: flex-start; justify-content: center; padding: 32px 40px; overflow-y: auto; }
+    .scheduler-overlay.show { display: flex; }
+    .scheduler-modal { background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.22); width: 100%; max-width: 960px; padding: 28px 32px; position: relative; }
+    .scheduler-close { position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: var(--blue-500); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1; }
+    .scheduler-close svg { width: 16px; height: 16px; color: #fff; }
+    .scheduler-title { font-size: 18px; font-weight: 700; color: var(--grey-600); margin-bottom: 4px; }
+    .tz-select { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--grey-600); cursor: pointer; border: 1px solid var(--grey-100); border-radius: 8px; padding: 6px 12px; background: #fff; }
+    .tz-select svg { width: 14px; height: 14px; color: var(--grey-400); }
+    .mini-cal { width: 220px; flex-shrink: 0; }
+    .mini-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .mini-cal-header span { font-size: 14px; font-weight: 700; color: var(--grey-600); }
+    .cal-nav { background: none; border: none; cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; }
+    .cal-nav:hover { background: var(--sapphire-50); }
+    .cal-nav svg { width: 14px; height: 14px; color: var(--grey-500); }
+    .mini-cal table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .mini-cal th { font-size: 11px; font-weight: 700; color: var(--grey-400); text-align: center; padding: 6px 0; width: calc(100% / 7); }
+    .mini-cal th.weekend-hdr { color: var(--grey-100); }
+    .mini-cal td { text-align: center; padding: 2px 0; width: calc(100% / 7); }
+    .cal-day { width: 30px; height: 30px; border-radius: 50%; border: none; background: none; font-size: 12px; color: var(--grey-600); cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; transition: background .12s; }
+    .cal-day:hover { background: var(--sapphire-50); }
+    .cal-day.selected { background: var(--blue-500); color: #fff; font-weight: 700; }
+    .cal-day.other-month { color: var(--grey-100); pointer-events: none; }
+    .cal-day.weekend { color: var(--grey-100); pointer-events: none; cursor: default; }
+    .slots-area { flex: 1; position: relative; min-width: 0; }
+    .slots-disabled-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.75); z-index: 10; border-radius: 8px; display: flex; align-items: center; justify-content: center; pointer-events: all; }
+    .slots-disabled-overlay span { font-size: 13px; color: var(--grey-400); font-weight: 600; background: #fff; padding: 8px 16px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .slots-scroll { overflow-x: auto; scrollbar-width: none; }
+    .slots-scroll::-webkit-scrollbar { display: none; }
+    .slots-table { border-collapse: collapse; width: 100%; }
+    .slots-table th { font-size: 11px; font-weight: 700; color: var(--grey-400); text-align: center; padding: 6px 4px; white-space: nowrap; min-width: 80px; }
+    .slots-table th .day-num { font-size: 20px; font-weight: 700; color: var(--grey-600); display: block; line-height: 1.1; }
+    .slots-table th.today-col .day-num { background: var(--blue-500); color: #fff; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+    .slots-table td { padding: 4px 4px; text-align: center; vertical-align: middle; min-width: 80px; }
+    .time-slot-btn { width: 100%; min-width: 76px; padding: 8px 6px; border: 1.5px solid var(--grey-100); border-radius: 8px; background: #fff; font-size: 11px; font-weight: 500; color: var(--grey-600); cursor: pointer; transition: border-color .15s, background .15s; white-space: nowrap; box-sizing: border-box; }
+    .time-slot-btn:hover { border-color: var(--blue-500); background: var(--sapphire-50); }
+    .time-slot-btn.selected { border-color: var(--blue-500); background: var(--sapphire-50); color: var(--blue-500); font-weight: 700; }
+    .slot-dash { color: var(--grey-100); font-size: 18px; line-height: 1; }
+    .confirm-btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 40px; border-radius: 10px; background: var(--grey-100); color: var(--grey-400); font-size: 15px; font-weight: 600; border: none; cursor: not-allowed; transition: background .15s, color .15s; }
+    .confirm-btn.active { background: var(--blue-500); color: #fff; cursor: pointer; }
+    .confirm-btn.active:hover { background: var(--blue-900); }
+
+    /* FEEDBACK OVERLAY */
+    .feedback-overlay { display: none; position: fixed; top: 75px; left: 260px; right: 0; bottom: 0; z-index: 8500; background: rgba(11,25,86,0.45); backdrop-filter: blur(3px); justify-content: center; align-items: flex-start; padding: 32px 40px; overflow-y: auto; }
+    .feedback-overlay.show { display: flex; }
+    .feedback-modal { background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.22); width: 100%; max-width: 660px; padding: 32px; position: relative; margin-bottom: 32px; }
+    .feedback-close { position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: var(--blue-500); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1; }
+    .feedback-close svg { width: 16px; height: 16px; color: #fff; }
+    .feedback-title { font-size: 20px; font-weight: 700; color: var(--blue-500); margin-bottom: 2px; padding-right: 44px; }
+    .feedback-subtitle { font-size: 13px; color: var(--grey-400); margin-bottom: 28px; }
+    .fb-section { margin-bottom: 4px; }
+    .fb-section-header { display: none; }
+    .fb-section-desc { display: none; }
+    .fb-q { margin-bottom: 20px; }
+    .fb-q > label.q-label { display: block; font-size: 14px; font-weight: 600; color: var(--grey-600); margin-bottom: 10px; }
+    .q-num { color: var(--blue-500); margin-right: 4px; }
+    .q-tag { font-size: 11px; color: var(--grey-400); font-weight: 400; margin-left: 6px; }
+    .star-row { display: flex; gap: 6px; }
+    .star-btn { background: none; border: none; cursor: pointer; font-size: 30px; color: var(--grey-100); line-height: 1; transition: color .1s; padding: 0; }
+    .star-btn.lit { color: #F59E0B; }
+    .opt-list { display: flex; flex-direction: column; gap: 6px; }
+    .opt-item { display: flex; align-items: center; gap: 10px; padding: 2px 0; cursor: pointer; }
+    .opt-item input[type=radio], .opt-item input[type=checkbox] { accent-color: var(--blue-500); width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+    .opt-item span { font-size: 13px; color: var(--grey-600); font-weight: 500; }
+    .fb-input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--grey-100); border-radius: 9px; font-family: 'Open Sans', sans-serif; font-size: 13px; color: var(--grey-600); outline: none; transition: border-color .15s; resize: vertical; box-sizing: border-box; }
+    .fb-input:focus { border-color: var(--blue-500); }
+    .upload-box { border: 2px dashed var(--grey-100); border-radius: 10px; padding: 22px 16px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; position: relative; }
+    .upload-box:hover { border-color: var(--blue-500); background: var(--sapphire-50); }
+    .upload-box input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-box .ub-icon { font-size: 28px; margin-bottom: 6px; }
+    .upload-box .ub-label { font-size: 13px; font-weight: 600; color: var(--grey-500); }
+    .upload-box .ub-hint { font-size: 11px; color: var(--grey-400); margin-top: 4px; }
+    .consent-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1.5px solid var(--grey-100); border-radius: 10px; cursor: pointer; }
+    .consent-row:hover { border-color: var(--blue-500); }
+    .consent-row input { accent-color: var(--blue-500); width: 17px; height: 17px; flex-shrink: 0; margin-top: 2px; cursor: pointer; }
+    .consent-row span { font-size: 13px; color: var(--grey-500); line-height: 1.55; }
+    .fb-divider { height: 1px; background: var(--grey-50); margin: 22px 0; }
+    .fb-submit { width: 100%; padding: 13px; border-radius: 10px; background: var(--blue-500); color: #fff; font-size: 15px; font-weight: 700; border: none; cursor: pointer; margin-top: 6px; transition: background .15s; }
+    .fb-submit:hover { background: var(--blue-900); }
+
+    /* ── COLLAPSIBLE SIDEBAR: ≤1100px ── */
+    @media(max-width:1100px) {
+      .menu-toggle { display: flex; }
+      .nav-center { display: none; }
+      .search-bar { width: 200px; }
+      .sidebar { transform: translateX(-100%); transition: transform .3s cubic-bezier(.4,0,.2,1); box-shadow: none; animation: none; }
+      .sidebar.open { transform: translateX(0); box-shadow: 6px 0 32px rgba(0,0,0,.2); }
+      .sidebar-overlay { display: block; }
+      .main-content { margin-left: 0; padding: 28px 24px 40px; }
+    }
+
+    @media (max-width: 600px) {
+       .top-nav{padding:6px 12px;gap:6px;}
+      .logo-icon{width:26px;height:32px;}
+      .logo-icon svg{width:26px;height:32px;}
+      .logo-name{font-size:18px;line-height:24px;}
+      .logo-subtitle{font-size:11px;line-height:16px;}
+      .nav-right{gap:6px;}
+      .search-bar{width:34px;height:34px;border-radius:50%;padding:0;justify-content:center;}
+      .search-input{display:none;}
+      .search-icon-btn{width:34px;height:34px;}
+      .bell-btn{width:34px;height:34px;}
+      .bell-btn svg{width:20px;height:20px;}
+       .sidebar {
+    top: var(--nav-height);
+    height: calc(100vh - var(--nav-height));
+    width: var(--sidebar-width);
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    z-index: 50;
+    animation: none; /* disable load animation on mobile — drawer handles its own transform */
+
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-nav { padding: 16px; gap: 8px; }
+  .nav-label { font-size: 15px; }
+  .sidebar-footer { padding: 16px 16px 0; }
+  .logout-btn { width: 100%; height: 48px; margin-bottom: 16px; }
+      .main-content { margin-top: 60px; margin-left: 0; padding: 16px; }
+      .stage-tabs { flex-wrap: nowrap; overflow-x: auto; padding: 12px; height: auto; }
+      .stage-tab { flex-shrink: 0; font-size: 12px; padding: 8px 12px; }
+      .download-popup { top: 72px; left: 50%; transform: translateX(-50%); }
+      .scheduler-overlay { left: 0; top: 60px; padding: 12px; }
+      .feedback-overlay { left: 0; top: 60px; padding: 12px; }
+      .feedback-modal { padding: 20px 16px; }
+    }
+    @media(max-width:380px) { .logo-subtitle { display: none; } }
+  </style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<header class="top-nav">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="logo-area">
+    <div class="logo-icon">
+      <svg width="63" height="75" viewBox="0 0 63 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clipA)">
+          <path class="logo-svg-stroke" d="M30.5922 23.9814V62.0454C30.5922 64.1223 29.7741 66.1144 28.3174 67.5845C26.8607 69.0546 24.8844 69.8825 22.8223 69.8865H17.0175C14.9528 69.8865 12.9726 69.0604 11.5126 67.5899C10.0526 66.1194 9.23242 64.125 9.23242 62.0454V31.8835C9.23242 29.7039 10.0526 27.7193 11.5135 26.3444C12.2366 25.6175 13.095 25.0413 14.0394 24.6489C14.9839 24.2565 15.9958 24.0556 17.0175 24.0576H40.1459C42.2081 24.0576 44.1859 24.8816 45.6455 26.3488C47.105 27.816 47.927 29.8065 47.931 31.8835V53.1993C47.927 55.2763 47.105 57.2668 45.6455 58.734C44.1859 60.2012 42.2081 61.0253 40.1459 61.0253H27.327C25.2623 61.0273 23.2821 60.2012 21.8222 58.7307C20.3622 57.2602 19.542 55.2657 19.542 53.1993V39.9683C19.542 37.8887 20.3622 35.8942 21.8222 34.4237C23.2821 32.9532 25.2623 32.1271 27.327 32.1271H53.7509" stroke="#0B1956" stroke-width="3.375" stroke-miterlimit="10" stroke-linecap="round"/>
+          <path class="logo-svg-fill" d="M30.2872 18.5139C34.52 18.5139 37.9513 15.0578 37.9513 10.7946C37.9513 6.53127 34.52 3.0752 30.2872 3.0752C26.0544 3.0752 22.623 6.53127 22.623 10.7946C22.623 15.0578 26.0544 18.5139 30.2872 18.5139Z" fill="#0B1956"/>
+        </g>
+        <defs><clipPath id="clipA"><rect width="48.6" height="68.85" fill="white" transform="translate(7.19336 3.0752)"/></clipPath></defs>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <span class="logo-name"><span class="one">one</span><span class="care">care</span></span>
+      <span class="logo-subtitle">Patient Portal</span>
+    </div>
+  </div>
+  <div class="nav-center"><span class="welcome-text">Welcome Rajiv!</span></div>
+  <div class="nav-right">
+    <div class="search-bar">
+      <input class="search-input" type="text" placeholder="Search">
+      <div class="search-icon-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#49454F" stroke-width="2"/><line x1="16.5" y1="16.5" x2="22" y2="22" stroke="#49454F" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+    <button class="bell-btn">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 3C9.13 3 6 6.13 6 10V17L4 19V20H22V19L20 17V10C20 6.13 16.87 3 13 3Z" stroke="#0B1956" stroke-width="2" fill="none"/><path d="M11 21C11 22.1 11.9 23 13 23C14.1 23 15 22.1 15 21" stroke="#0B1956" stroke-width="2" fill="none"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <nav class="sidebar-nav">
+    <div class="nav-item">
+      <div class="nav-icon"><svg width="31" height="31" viewBox="0 0 31 31" fill="none"><rect x="4" y="4" width="10" height="10" rx="1" stroke="#E7E8EE" stroke-width="2.6"/><rect x="18" y="4" width="9" height="6" rx="1" stroke="#E7E8EE" stroke-width="2.6"/><rect x="18" y="15" width="9" height="12" rx="1" stroke="#E7E8EE" stroke-width="2.6"/><rect x="4" y="18" width="10" height="9" rx="1" stroke="#E7E8EE" stroke-width="2.6"/></svg></div>
+      <span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M14.2847 28.2159C14.6795 28.4439 15.1274 28.5639 15.5832 28.5639C16.0391 28.5639 16.487 28.4439 16.8818 28.2159L25.9715 23.0218C26.6935 22.4667 26.9214 22.0724 27.27 20.7754V10.3871C27.2695 9.93171 26.6935 8.69582 25.9715 8.14068L16.8818 2.94657C16.487 2.71863 15.5832 2.59863 14.2847 2.94657L5.19501 8.14068C4.8006 8.3684 4.01717 9.48441 3.89648 10.3871V20.7754C3.89695 21.2308 4.47301 22.4667 5.19501 23.0218L14.2847 28.2159Z" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.582 28.5663V15.5811" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.27344 9.08887L15.5836 15.5815L26.8938 9.08887" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="nav-label">Package Selection</span>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon"><svg width="31" height="31" viewBox="0 0 31 31" fill="none"><rect x="3" y="7" width="25" height="17" rx="2" stroke="#E7E8EE" stroke-width="2.6"/><line x1="3" y1="14" x2="28" y2="14" stroke="#E7E8EE" stroke-width="2.6"/></svg></div>
+      <span class="nav-label">Payments</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon"><svg width="31" height="31" viewBox="0 0 31 31" fill="none"><path d="M25.423 12.7125C25.423 19.0595 18.3819 25.6697 16.0175 27.7112C15.2535 27.9664 14.4895 27.7112 12.1251 25.6697C9.76064 23.6282 5.08398 19.0595 5.08398 12.7125C5.08398 6.8 9.8 2.54297 15.2535 2.54297C20.707 2.54297 25.423 6.8 25.423 12.7125Z" stroke="#0B1956" stroke-width="2.64407" stroke-linecap="round" stroke-linejoin="round"/><circle cx="15.255" cy="12.712" r="3.814" stroke="#0B1956" stroke-width="2.64407"/></svg></div>
+      <span class="nav-label">My Journey</span>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M7.79237 28.5682C6.36 28.5682 5.19531 27.3035 5.19531 25.9712V5.19472C5.19531 3.75 6.36 2.59766 7.79237 2.59766H18.1806C18.9988 2.59699 19.7583 2.99233 20.3933 3.51442L25.0524 8.17354C25.7337 9.1892 25.9718 9.97716 25.9718 10.3888V25.9712C25.9718 27.3035 24.8071 28.5682 23.3747 28.5682H7.79237Z" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.1797 2.59766V9.0903C18.1797 9.77938 18.8035 10.3888 19.4782 10.3888H25.9709" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.7788 16.8789H10.3906" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.7788 22.0742H10.3906" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="nav-label">Medical Records</span>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M7.79297 3.89648V19.4788" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/><path d="M23.3761 11.6877C25.5275 11.6877 27.2716 9.94354 27.2716 7.79207C27.2716 5.6406 25.5275 3.89648 23.3761 3.89648C21.2246 3.89648 19.4805 5.6406 19.4805 7.79207C19.4805 9.94354 21.2246 11.6877 23.3761 11.6877Z" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.79207 27.2697C9.94354 27.2697 11.6877 25.5256 11.6877 23.3741C11.6877 21.2226 9.94354 19.4785 7.79207 19.4785C5.6406 19.4785 3.89648 21.2226 3.89648 23.3741C3.89648 25.5256 5.6406 27.2697 7.79207 27.2697Z" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/><path d="M23.3743 11.6875C23.3743 14.787 22.143 17.7596 19.9513 19.9513C17.7596 22.143 14.787 23.3743 11.6875 23.3743" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="nav-label">Hospitals &amp; Doctors</span>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon"><svg width="31" height="31" viewBox="0 0 31 31" fill="none"><rect x="4" y="5" width="23" height="22" rx="2" stroke="#E7E8EE" stroke-width="2.6"/><line x1="4" y1="12" x2="27" y2="12" stroke="#E7E8EE" stroke-width="2.6"/><line x1="10" y1="2" x2="10" y2="8" stroke="#E7E8EE" stroke-width="2.6"/><line x1="21" y1="2" x2="21" y2="8" stroke="#E7E8EE" stroke-width="2.6"/><line x1="15.5" y1="17" x2="15.5" y2="23" stroke="#E7E8EE" stroke-width="2.6"/></svg></div>
+      <span class="nav-label">Appointments</span>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M28.5682 22.0759C28.5682 22.7647 28.2946 23.4252 27.8076 23.9123C27.3205 24.3993 26.6599 24.6729 25.9712 24.6729H8.86695C8.17822 24.6731 7.51776 24.9468 7.03083 25.4339L4.17147 28.2932C4.04253 28.4221 3.87827 28.5099 3.69944 28.5455C3.52062 28.5811 3.33526 28.5628 3.16681 28.493C2.99836 28.4233 2.85438 28.3051 2.75307 28.1535C2.65176 28.0019 2.59768 27.8237 2.59766 27.6414V6.49354C2.59766 5.80476 2.87127 5.14419 3.35832 4.65714C3.84536 4.1701 4.50593 3.89648 5.19471 3.89648H25.9712C26.6599 3.89648 27.3205 4.1701 27.8076 4.65714C28.2946 5.14419 28.5682 5.80476 28.5682 6.49354V22.0759Z" stroke="#E7E8EE" stroke-width="2.59706" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="nav-label">Messages</span>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon"><svg width="31" height="31" viewBox="0 0 31 31" fill="none"><circle cx="15.5" cy="15.5" r="11.5" stroke="#E7E8EE" stroke-width="2.6"/><path d="M12 12C12 10.343 13.343 9 15 9H16C17.657 9 19 10.343 19 12C19 13.657 17.657 15 16 15H15V18" stroke="#E7E8EE" stroke-width="2.6" stroke-linecap="round"/><circle cx="15.5" cy="22" r="1" fill="#E7E8EE"/></svg></div>
+      <span class="nav-label">Support</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">
+        <svg width="37" height="37" viewBox="0 0 37 37" fill="none"><circle cx="18.5" cy="13" r="6" stroke="#0B1956" stroke-width="3.1"/><path d="M5 32C5 24.82 11.268 19 19 19C26.732 19 33 24.82 33 32" stroke="#0B1956" stroke-width="3.1" stroke-linecap="round"/></svg>
+      </div>
+      <div class="user-details">
+        <span class="user-name">Rajiv Mehta</span>
+        <span class="user-id">Patient ID: MT-123456</span>
+      </div>
+    </div>
+    <button class="logout-btn">
+      <span class="logout-label">Logout</span>
+      <svg width="25" height="25" viewBox="0 0 25 25" fill="none"><path d="M9 21H5C4.447 21 4 20.552 4 20V5C4 4.448 4.447 4 5 4H9" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/><polyline points="16,17 21,12.5 16,8" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="12.5" x2="9" y2="12.5" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div id="pageContent">
+<main class="main-content">
+
+  <!-- Journey Card -->
+  <div class="journey-card mb-4 fade-in delay-1">
+    <h2 class="mb-1">My Journey</h2>
+    <p class="subtitle mb-3">Stage-Wise Timeline View – Complete Itinerary</p>
+    <div class="journey-info-box">
+      <p class="mb-0">A unified, real-time care timeline.<br>Track your treatment progress with clarity.<br>Stay informed about every stage of your journey.<br>Know exactly what comes next at every moment.</p>
+    </div>
+  </div>
+
+  <!-- Stage Tabs -->
+  <div class="stage-tabs d-flex align-items-center gap-2 flex-wrap mb-4 fade-in delay-2">
+    <button class="stage-tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Pre-Arrival</button>
+    <a href="arrival_trial.html" class="stage-tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Arrival in India</a>
+    <a href="treatment_trial.html" class="stage-tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Treatments</a>
+    <a href="recovery_trail.html" class="stage-tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Recovery</a>
+    <a href="discharge.html" class="stage-tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Discharge</a>
+    <button class="stage-tab active">Post Care</button>
+  </div>
+
+  <div class="stage-heading mb-4 fade-in delay-3">Stage 6: Post-Care</div>
+
+  <!-- Row 1: Medication + Nutrition -->
+  <div class="row g-4 mb-4 scroll-fade">
+    <div class="col-12 col-md-4">
+      <div class="section-card h-100">
+        <div class="section-card-header mb-3">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#303231" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <h3>Prescribed Medication List</h3>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          <div class="med-item"><div class="med-name">Aspirin 75 mg</div><div class="med-info">1 tablet · After breakfast · Everyday</div></div>
+          <div class="med-item"><div class="med-name">Calcium + Vitamin D</div><div class="med-info">1 tablet · After meals · Everyday</div></div>
+          <div class="med-item"><div class="med-name">Paracetamol</div><div class="med-info">Max 3 tablets/24 hours · As needed for pain</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-8">
+      <div class="section-card h-100">
+        <div class="section-card-header mb-3">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#303231" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
+          <h3>Recommended Nutrition Plan</h3>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-6 col-md-4"><div class="nutrition-item h-100"><div class="nutrition-label">Protein Intake</div><div class="nutrition-desc">Lean meats, fish, legumes, dairy</div></div></div>
+          <div class="col-6 col-md-4"><div class="nutrition-item h-100"><div class="nutrition-label">Calcium Sources</div><div class="nutrition-desc">Milk, ragi, sesame seeds, almonds</div></div></div>
+          <div class="col-6 col-md-4"><div class="nutrition-item h-100"><div class="nutrition-label">Vitamin D Support</div><div class="nutrition-desc">Safe sunlight exposure, fortified dairy</div></div></div>
+          <div class="col-6 col-md-4"><div class="nutrition-item h-100"><div class="nutrition-label">Anti-Inflammatory Foods</div><div class="nutrition-desc">Leafy greens, berries, turmeric, ginger</div></div></div>
+          <div class="col-6 col-md-4"><div class="nutrition-item h-100"><div class="nutrition-label">Hydration</div><div class="nutrition-desc">Maintain adequate fluid intake</div></div></div>
+          <div class="col-6 col-md-4"><div class="nutrition-item h-100"><div class="nutrition-label">Dietary Restrictions</div><div class="nutrition-desc">Limit excess sodium, processed foods</div></div></div>
+        </div>
+        <div class="nutrition-note mb-2">To view the entire nutrition plan</div>
+        <button class="btn-primary-custom" onclick="showDownloadPopup()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 5v14m0 0l-5-5m5 5l5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Download full nutrition plan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tele-Consultation Follow-ups -->
+  <div class="section-card mb-4 scroll-fade">
+    <div class="section-card-header mb-3">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#303231" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="15" height="14" rx="2"/><path d="m17 12 5-3v10l-5-3"/></svg>
+      <h3>Tele-Consultation Follow-ups</h3>
+    </div>
+    <div class="row g-3">
+      <div class="col-12 col-md-4">
+        <div class="consult-card h-100 d-flex flex-column justify-content-between">
+          <div>
+            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+              <div class="consult-title">Week 2 Follow-up</div>
+              <span class="badge-status badge-completed">Completed</span>
+            </div>
+            <div class="consult-meta mb-3">February 10, 2026 · Dr. Anil Kapoor</div>
+          </div>
+          <button class="btn-outline-dark-custom" style="width:auto; align-self:flex-start;">View Summary</button>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="consult-card h-100 d-flex flex-column justify-content-between">
+          <div>
+            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+              <div class="consult-title">Month 1 Follow-up</div>
+              <span class="badge-status badge-scheduled">Scheduled</span>
+            </div>
+            <div class="consult-meta mb-3" id="month1-meta">February 24, 2026 · Dr. Anil Kapoor</div>
+          </div>
+          <button class="btn-primary-custom" style="align-self:flex-start;" onclick="openScheduler('month1')">Reschedule</button>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="consult-card h-100 d-flex flex-column justify-content-between">
+          <div>
+            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+              <div class="consult-title">Month 3 Follow-up</div>
+              <span class="badge-status badge-pending" id="month3-badge">Pending</span>
+            </div>
+            <div class="consult-meta mb-3" id="month3-meta">April 21, 2026 · Dr. Anil Kapoor</div>
+          </div>
+          <button class="btn-outline-dark-custom" style="width:auto; align-self:flex-start;" onclick="openScheduler('month3')">Schedule now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Collapsibles -->
+  <div class="row g-4 mb-4 scroll-fade">
+    <div class="col-12 col-md-6">
+      <div class="collapse-card">
+        <div class="collapse-header" onclick="toggleCollapse('physio')">
+          <div class="collapse-header-left">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><g clip-path="url(#cp1)"><path d="M12 12L8 8" stroke="#303231" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5478 17.9035C15.2353 18.2161 14.8114 18.3918 14.3694 18.3919C13.9273 18.392 13.5034 18.2164 13.1907 17.9039C12.8781 17.5914 12.7024 17.1675 12.7024 16.7255C12.7023 16.2834 12.8778 15.8595 13.1903 15.5468L11.7178 17.0202C11.4052 17.3328 10.9812 17.5084 10.5391 17.5084C10.097 17.5084 9.67295 17.3328 9.36032 17.0202C9.0477 16.7076 8.87207 16.2835 8.87207 15.8414C8.87207 15.3993 9.0477 14.9753 9.36032 14.6627L14.6637 9.35935C14.9763 9.04672 15.4003 8.87109 15.8424 8.87109C16.2845 8.87109 16.7085 9.04672 17.0212 9.35935C17.3338 9.67197 17.5094 10.096 17.5094 10.5381C17.5094 10.9802 17.3338 11.4042 17.0212 11.7168L15.5478 13.1893C15.8604 12.8768 16.2844 12.7013 16.7265 12.7014C17.1685 12.7015 17.5924 12.8771 17.9049 13.1898C18.2174 13.5024 18.3929 13.9264 18.3929 14.3684C18.3928 14.8104 18.2171 15.2343 17.9045 15.5468L15.5478 17.9035Z" stroke="#303231" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.9167 17.9167L16.75 16.75" stroke="#303231" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.24967 3.2487L2.08301 2.08203" stroke="#303231" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.33663 10.6419C5.02401 10.9545 4.6 11.1302 4.15788 11.1302C3.71576 11.1302 3.29176 10.9545 2.97913 10.6419C2.66651 10.3293 2.49088 9.90529 2.49088 9.46317C2.49088 9.02105 2.66651 8.59704 2.97913 8.28442L4.45246 6.81192C4.29767 6.96666 4.11391 7.0894 3.91168 7.17312C3.70945 7.25684 3.49271 7.29992 3.27384 7.29988C2.8318 7.2998 2.40789 7.12413 2.09538 6.8115C1.94064 6.65671 1.8179 6.47295 1.73418 6.27072C1.65046 6.06849 1.60738 5.85175 1.60742 5.63287C1.6075 5.19083 1.78317 4.76693 2.0958 4.45442L4.45246 2.09775C4.76498 1.78513 5.18888 1.60945 5.63092 1.60938C5.8498 1.60934 6.06654 1.65241 6.26876 1.73613C6.47099 1.81986 6.65475 1.94259 6.80955 2.09733C6.96434 2.25208 7.08715 2.43579 7.17094 2.63799C7.25474 2.84019 7.29789 3.05691 7.29792 3.27579C7.29796 3.49467 7.25489 3.71141 7.17117 3.91363C7.08744 4.11586 6.96471 4.29962 6.80996 4.45442L8.28246 2.98108C8.59509 2.66846 9.0191 2.49283 9.46121 2.49283C9.90333 2.49283 10.3273 2.66846 10.64 2.98108C10.9526 3.29371 11.1282 3.71772 11.1282 4.15983C11.1282 4.60195 10.9526 5.02596 10.64 5.33858L5.33663 10.6419Z" stroke="#303231" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g><defs><clipPath id="cp1"><rect width="20" height="20" fill="white"/></clipPath></defs></svg>
+            <h3>Tele-Physiotherapy Support</h3>
+          </div>
+          <button class="chevron-btn open" id="chevron-physio">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="6 9 12 15 18 9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="collapse-body" id="body-physio">
+          <p>Recover comfortably at home with expert-guided virtual sessions tailored to support your post-surgery healing and progress with Certified therapists.</p>
+          <button class="btn-primary-custom">Know More</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="collapse-card">
+        <div class="collapse-header" onclick="toggleCollapse('testimonials')">
+          <div class="collapse-header-left">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#303231" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            <h3>Testimonials</h3>
+          </div>
+          <button class="chevron-btn open" id="chevron-testimonials">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="6 9 12 15 18 9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="collapse-body" id="body-testimonials">
+          <p>Tell us about your recovery journey and your experience with OneCare's services. You can also share photos or videos and rate your overall experience.</p>
+          <button class="btn-primary-custom" onclick="openFeedbackForm()">Share your story</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- DOWNLOAD POPUP -->
+<div id="downloadPopup" class="download-popup">
+  <svg id="dlIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1956" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+  <svg id="dlSpinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1956" stroke-width="2.2" stroke-linecap="round" style="display:none; animation: spin 1s linear infinite;">
+    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+  </svg>
+  <span id="dlMsg">Downloading...</span>
+</div>
+
+<!-- SCHEDULER OVERLAY -->
+<div id="schedulerOverlay" class="scheduler-overlay" onclick="handleSchedulerOverlayClick(event)">
+  <div class="scheduler-modal" id="schedulerModal">
+    <button class="scheduler-close" onclick="closeScheduler()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="d-flex align-items-start justify-content-between mb-4" style="padding-right:48px;">
+      <div class="scheduler-title">Select an appointment date and time</div>
+      <div class="tz-select">Central European Time (GMT +01:00)<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="18 15 12 9 6 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+    <div class="d-flex gap-2" style="align-items:flex-start;">
+      <div class="mini-cal">
+        <div class="mini-cal-header">
+          <button class="cal-nav" onclick="changeMonth(-1)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="15 18 9 12 15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <span id="calMonthLabel"></span>
+          <button class="cal-nav" onclick="changeMonth(1)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+        <table class="mini-cal"><thead><tr id="calDayHeaders"></tr></thead><tbody id="calBody"></tbody></table>
+      </div>
+      <div class="slots-area">
+        <div id="slotsDisabledOverlay" class="slots-disabled-overlay"><span>Select a date first</span></div>
+        <div class="d-flex align-items-start gap-2">
+          <div class="slots-scroll flex-grow-1"><table class="slots-table" id="slotsTable"></table></div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex justify-content-center mt-4">
+      <button class="confirm-btn" id="confirmBtn" onclick="confirmAppointment()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ══ SIDEBAR TOGGLE ══ */
+  (function(){
+    var toggle  = document.getElementById('menuToggle');
+    var sidebar = document.querySelector('.sidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    function openSidebar()  { sidebar.classList.add('open');    overlay.classList.add('active');    toggle.classList.add('open');    document.body.style.overflow='hidden'; }
+    function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); toggle.classList.remove('open'); document.body.style.overflow=''; }
+    toggle.addEventListener('click', function(){ sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
+    overlay.addEventListener('click', closeSidebar);
+    document.querySelectorAll('.nav-item').forEach(function(item){
+      item.addEventListener('click', function(){ if(window.innerWidth<=1100) closeSidebar(); });
+    });
+  })();
+
+  /* ── PHP redirect toast ── */
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status'), msg = params.get('msg');
+    if (!status || !msg) return;
+    const popup = document.getElementById('downloadPopup'), page = document.getElementById('pageContent');
+    document.getElementById('dlIcon').style.display = 'none';
+    document.getElementById('dlMsg').textContent = ' ' + decodeURIComponent(msg);
+    popup.style.borderLeftColor = status==='success' ? '#2E7D32' : '#C62828';
+    popup.style.color = status==='success' ? '#2E7D32' : '#C62828';
+    popup.classList.add('show'); page.classList.add('blur-bg');
+    setTimeout(() => { popup.classList.remove('show'); page.classList.remove('blur-bg'); document.getElementById('dlIcon').style.display=''; popup.style.borderLeftColor=''; popup.style.color=''; history.replaceState(null,'',window.location.pathname); }, 3500);
+  })();
+
+  /* ── Download popup ── */
+  function showDownloadPopup() {
+    const popup = document.getElementById("downloadPopup"), page = document.getElementById("pageContent");
+    const msg = document.getElementById("dlMsg"), spinner = document.getElementById("dlSpinner"), icon = document.getElementById("dlIcon");
+    msg.textContent = "Downloading...";
+    spinner.style.display = "inline"; icon.style.display = "none";
+    popup.style.borderLeftColor = "var(--blue-500)"; popup.style.color = "var(--blue-500)";
+    spinner.setAttribute("stroke","#0B1956");
+    popup.classList.add("show"); page.classList.add("blur-bg");
+    setTimeout(() => {
+      msg.textContent = "Successfully Downloaded!";
+      spinner.style.display = "none"; icon.style.display = "inline";
+      popup.style.borderLeftColor = "#2E7D32"; popup.style.color = "#2E7D32";
+      icon.setAttribute("stroke","#2E7D32");
+    }, 2000);
+    setTimeout(() => {
+      popup.classList.remove("show"); page.classList.remove("blur-bg");
+      icon.setAttribute("stroke","#0B1956");
+    }, 3500);
+  }
+
+  /* ── Scroll-triggered fade-in ── */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.scroll-fade').forEach(el => observer.observe(el));
+
+  /* ── Scheduler ── */
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS = ['M','T','W','T','F','S','S'];
+  const WEEK_SLOT_SETS = [
+    { 1: ['9 AM - 9:30 AM','11 AM - 11:30 AM','1 PM - 1:30 PM','4 PM - 4:30 PM','6 PM - 6:30 PM'], 2: null, 3: ['10 AM - 10:30 AM','12 PM - 12:30 PM','2 PM - 2:30 PM','5 PM - 5:30 PM','7 PM - 7:30 PM'], 4: ['9:30 AM - 10 AM','11:30 AM - 12 PM','1:30 PM - 2 PM','3:30 PM - 4 PM','6:30 PM - 7 PM'], 5: null, 6: null, 0: null },
+    { 1: ['8 AM - 8:30 AM','10 AM - 10:30 AM','12 PM - 12:30 PM','3 PM - 3:30 PM','5:30 PM - 6 PM'], 2: ['9 AM - 9:30 AM','11 AM - 11:30 AM','2 PM - 2:30 PM','4:30 PM - 5 PM','6 PM - 6:30 PM'], 3: null, 4: ['10:30 AM - 11 AM','1 PM - 1:30 PM','3 PM - 3:30 PM','5 PM - 5:30 PM','7 PM - 7:30 PM'], 5: null, 6: null, 0: null },
+    { 1: null, 2: ['8:30 AM - 9 AM','10:30 AM - 11 AM','12:30 PM - 1 PM','3:30 PM - 4 PM','6 PM - 6:30 PM'], 3: ['9 AM - 9:30 AM','11 AM - 11:30 AM','1:30 PM - 2 PM','4 PM - 4:30 PM','6:30 PM - 7 PM'], 4: ['10 AM - 10:30 AM','12 PM - 12:30 PM','2:30 PM - 3 PM','5 PM - 5:30 PM','7 PM - 7:30 PM'], 5: null, 6: null, 0: null },
+    { 1: ['9:30 AM - 10 AM','11:30 AM - 12 PM','2 PM - 2:30 PM','4:30 PM - 5 PM','7 PM - 7:30 PM'], 2: ['8 AM - 8:30 AM','10 AM - 10:30 AM','1 PM - 1:30 PM','3:30 PM - 4 PM','6 PM - 6:30 PM'], 3: null, 4: null, 5: null, 6: null, 0: null }
+  ];
+  function getWeekOffset() { const baseMonday = new Date(today); baseMonday.setDate(today.getDate() - (today.getDay() + 6) % 7); const diffMs = weekStart - baseMonday; return Math.round(diffMs / (7 * 24 * 60 * 60 * 1000)); }
+  function getSlotsForDay(dayOfWeek) { const offset = ((getWeekOffset() % 4) + 4) % 4; const template = WEEK_SLOT_SETS[offset]; return template[dayOfWeek] || null; }
+  const today = new Date();
+  let calYear = today.getFullYear(), calMonth = today.getMonth();
+  let weekStart = new Date(today); weekStart.setDate(today.getDate() - (today.getDay() + 6) % 7);
+  let selectedDate = null, selectedSlot = null, activeCardId = null;
+  function openScheduler(cardId) { activeCardId = cardId; selectedDate = null; selectedSlot = null; document.getElementById("schedulerOverlay").classList.add("show"); document.getElementById("pageContent").classList.add("blur-bg"); document.getElementById('slotsDisabledOverlay').style.display = 'flex'; renderCalendar(); renderSlots(); }
+  function closeScheduler() { document.getElementById("schedulerOverlay").classList.remove("show"); document.getElementById("pageContent").classList.remove("blur-bg"); }
+  function handleSchedulerOverlayClick(e) { if (e.target===document.getElementById("schedulerOverlay")) closeScheduler(); }
+  function dateKey(d) { return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+  function changeMonth(delta) { calMonth+=delta; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+  function selectDate(y, m, d) { selectedDate = new Date(y, m, d); selectedSlot = null; document.getElementById('slotsDisabledOverlay').style.display = 'none'; renderCalendar(); const dw = (selectedDate.getDay()+6)%7; weekStart = new Date(selectedDate); weekStart.setDate(selectedDate.getDate()-dw); renderSlots(); updateConfirm(); }
+  function renderCalendar() {
+    document.getElementById("calMonthLabel").textContent = `${MONTHS[calMonth]} ${calYear}`;
+    const hdr = document.getElementById("calDayHeaders"); hdr.innerHTML = DAYS.map((d,i) => `<th class="${i>=5?'weekend-hdr':''}">${d}</th>`).join('');
+    const first = new Date(calYear, calMonth, 1); const startDow = (first.getDay()+6)%7; const daysInMonth = new Date(calYear, calMonth+1, 0).getDate(); const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+    let cells = []; for (let i=startDow-1; i>=0; i--) cells.push({d:daysInPrev-i, cur:false}); for (let d=1; d<=daysInMonth; d++) { const col=(startDow+d-1)%7; cells.push({d, cur:true, col}); } let ex=1; while(cells.length%7!==0) cells.push({d:ex++, cur:false});
+    const tbody = document.getElementById("calBody"); tbody.innerHTML='';
+    for (let r=0; r<cells.length/7; r++) { const tr=document.createElement('tr'); for (let c=0; c<7; c++) { const cell=cells[r*7+c], td=document.createElement('td'), btn=document.createElement('button'); btn.className='cal-day'; btn.textContent=cell.d; if (!cell.cur) { btn.classList.add('other-month'); } else if (c>=5) { btn.classList.add('weekend'); } else { const isSel = selectedDate&&cell.d===selectedDate.getDate()&&calMonth===selectedDate.getMonth()&&calYear===selectedDate.getFullYear(); if (isSel) btn.classList.add('selected'); btn.onclick = () => selectDate(calYear, calMonth, cell.d); } td.appendChild(btn); tr.appendChild(td); } tbody.appendChild(tr); }
+  }
+  function renderSlots() {
+    const table = document.getElementById("slotsTable"); const cols = []; for (let i=0; i<5; i++) { const d=new Date(weekStart); d.setDate(weekStart.getDate()+i); cols.push(d); }
+    const allTimes = ['10 AM - 10:30 AM','11 AM - 11:30 AM','1 PM - 1:30 PM','4 PM - 4:30 PM','6 PM - 6:30 PM']; const dayNames=['MON','TUE','WED','THU','FRI'];
+    let html='<thead><tr><th></th>'; cols.forEach((d,i) => { const isSel=selectedDate&&d.toDateString()===selectedDate.toDateString(); html+=`<th class="${isSel?'today-col':''}"><div style="font-size:10px;color:var(--grey-400);font-weight:700;">${dayNames[i]}</div><div class="day-num">${d.getDate()}</div></th>`; }); html+='</tr></thead><tbody>';
+    allTimes.forEach((rowLabel, rowIdx) => { html+='<tr><td style="font-size:11px;color:var(--grey-400);white-space:nowrap;padding-right:8px;"></td>'; cols.forEach(d => { const dw=(d.getDay()+6)%7; const slots=getSlotsForDay(dw); const slotText = slots ? slots[rowIdx] : null; const available = !!slotText; const key=dateKey(d); const isSel=selectedSlot&&selectedSlot.dateKey===key&&selectedSlot.time===slotText; html += available ? `<td><button class="time-slot-btn${isSel?' selected':''}" onclick="selectSlot('${key}','${slotText}',this)">${slotText}</button></td>` : `<td><span class="slot-dash">—</span></td>`; }); html+='</tr>'; });
+    html+='</tbody>'; table.innerHTML=html;
+  }
+  function selectSlot(key, time, btn) { selectedSlot={dateKey:key, time}; document.querySelectorAll('.time-slot-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); updateConfirm(); }
+  function updateConfirm() { const btn=document.getElementById("confirmBtn"); btn.classList.toggle('active', !!selectedSlot); }
+  function confirmAppointment() {
+    if (!selectedSlot) return; closeScheduler();
+    if (selectedDate && activeCardId) { const months=['January','February','March','April','May','June','July','August','September','October','November','December']; const formatted = `${months[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()} · Dr. Anil Kapoor`; if (activeCardId === 'month1') { document.getElementById('month1-meta').textContent = formatted; } else if (activeCardId === 'month3') { document.getElementById('month3-meta').textContent = formatted; const badge = document.getElementById('month3-badge'); badge.textContent = 'Scheduled'; badge.className = 'badge-status badge-scheduled'; } }
+    const popup=document.getElementById("downloadPopup"), page=document.getElementById("pageContent"); const msg=document.getElementById("dlMsg"), spinner=document.getElementById("dlSpinner"), icon=document.getElementById("dlIcon"); spinner.style.display='none'; icon.style.display='inline'; msg.textContent=' Appointment confirmed!'; popup.style.borderLeftColor='#2E7D32'; popup.style.color='#2E7D32'; icon.setAttribute("stroke","#2E7D32"); popup.classList.add("show"); page.classList.add("blur-bg"); setTimeout(()=>{ popup.classList.remove("show"); page.classList.remove("blur-bg"); icon.setAttribute("stroke","#0B1956"); popup.style.borderLeftColor=''; popup.style.color=''; }, 2500);
+  }
+
+  /* ── Collapsible ── */
+  function toggleCollapse(id) { const body=document.getElementById('body-'+id), chevron=document.getElementById('chevron-'+id); const isOpen=body.style.display!=='none'; if(isOpen){body.style.display='none';chevron.classList.remove('open');}else{body.style.display='block';chevron.classList.add('open');} }
+
+  /* ── Feedback Form ── */
+  function openFeedbackForm() { document.getElementById('feedbackOverlay').classList.add('show'); document.getElementById('pageContent').classList.add('blur-bg'); }
+  function closeFeedbackForm() { document.getElementById('feedbackOverlay').classList.remove('show'); document.getElementById('pageContent').classList.remove('blur-bg'); }
+  function handleFeedbackOverlayClick(e) { if(e.target===document.getElementById('feedbackOverlay')) closeFeedbackForm(); }
+  let starRating=0;
+  function setStars(n) { starRating=n; document.getElementById('starRatingInput').value=n; document.querySelectorAll('.star-btn').forEach(b=>b.classList.toggle('lit',parseInt(b.dataset.star)<=n)); }
+  document.querySelectorAll('.star-btn').forEach(b=>{ b.addEventListener('mouseover',()=>{ const n=parseInt(b.dataset.star); document.querySelectorAll('.star-btn').forEach(s=>s.classList.toggle('lit',parseInt(s.dataset.star)<=n)); }); b.addEventListener('mouseout',()=>{ document.querySelectorAll('.star-btn').forEach(s=>s.classList.toggle('lit',parseInt(s.dataset.star)<=starRating)); }); });
+  document.querySelectorAll('.opt-item input').forEach(inp=>{ inp.addEventListener('change',()=>{ if(inp.type==='radio') document.querySelectorAll(`.opt-item input[name="${inp.name}"]`).forEach(r=>r.closest('.opt-item').classList.remove('selected')); inp.closest('.opt-item').classList.toggle('selected',inp.checked); }); });
+  async function submitFeedback(e) { e.preventDefault(); const form=document.getElementById('feedbackForm'), submitBtn=form.querySelector('.fb-submit'); submitBtn.textContent='Submitting…'; submitBtn.disabled=true; try { const response=await fetch('submit_feedback.php',{method:'POST',body:new FormData(form)}); const result=await response.json(); if(result.success){ closeFeedbackForm(); form.reset(); starRating=0; document.querySelectorAll('.star-btn').forEach(b=>b.classList.remove('lit')); showToast('Thank you for sharing your story!','#2E7D32'); } else { alert('Error: '+result.message); } } catch(err){ alert('Network error. Please try again.'); } finally{ submitBtn.textContent='Submit Your Story'; submitBtn.disabled=false; } }
+  function showToast(text, color) { const popup=document.getElementById("downloadPopup"), page=document.getElementById("pageContent"); const msg=document.getElementById("dlMsg"), spinner=document.getElementById("dlSpinner"), icon=document.getElementById("dlIcon"); spinner.style.display='none'; icon.style.display='inline'; msg.textContent=' '+text; popup.style.borderLeftColor=color; popup.style.color=color; icon.setAttribute("stroke", color); popup.classList.add('show'); page.classList.add('blur-bg'); setTimeout(()=>{ popup.classList.remove('show'); page.classList.remove('blur-bg'); popup.style.borderLeftColor=''; popup.style.color=''; icon.setAttribute("stroke","#0B1956"); }, 3000); }
+</script>
+
+<!-- FEEDBACK FORM OVERLAY -->
+<div id="feedbackOverlay" class="feedback-overlay" onclick="handleFeedbackOverlayClick(event)">
+  <div class="feedback-modal">
+    <button class="feedback-close" onclick="closeFeedbackForm()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="feedback-title">Share Your Story</div>
+    <div class="feedback-subtitle">Help other patients feel confident about choosing OneCare</div>
+    <form id="feedbackForm" action="submit_feedback.php" method="POST" enctype="multipart/form-data">
+      <div class="fb-section">
+        <div class="fb-q">
+          <label class="q-label"><span class="q-num">1.</span> How would you rate your overall experience with OneCare?</label>
+          <div class="star-row">
+            <button type="button" class="star-btn" data-star="1" onclick="setStars(1)">★</button>
+            <button type="button" class="star-btn" data-star="2" onclick="setStars(2)">★</button>
+            <button type="button" class="star-btn" data-star="3" onclick="setStars(3)">★</button>
+            <button type="button" class="star-btn" data-star="4" onclick="setStars(4)">★</button>
+            <button type="button" class="star-btn" data-star="5" onclick="setStars(5)">★</button>
+          </div>
+          <input type="hidden" name="star_rating" id="starRatingInput" value="0">
+        </div>
+        <div class="fb-q">
+          <label class="q-label"><span class="q-num">2.</span> Did OneCare make your medical journey easier?</label>
+          <div class="opt-list">
+            <label class="opt-item"><input type="radio" name="q2" value="yes_def"><span>Yes, definitely</span></label>
+            <label class="opt-item"><input type="radio" name="q2" value="mostly_yes"><span>Mostly yes</span></label>
+            <label class="opt-item"><input type="radio" name="q2" value="somewhat"><span>Somewhat</span></label>
+            <label class="opt-item"><input type="radio" name="q2" value="not_really"><span>Not really</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="fb-divider"></div>
+      <div class="fb-section">
+        <div class="fb-q">
+          <label class="q-label"><span class="q-num">3.</span> Which OneCare services helped you the most? <span class="q-tag">(Multi-select)</span></label>
+          <div class="opt-list">
+            <label class="opt-item"><input type="checkbox" name="q3[]" value="treatment"><span>Treatment guidance</span></label>
+            <label class="opt-item"><input type="checkbox" name="q3[]" value="appointments"><span>Appointment coordination</span></label>
+            <label class="opt-item"><input type="checkbox" name="q3[]" value="travel"><span>Travel assistance</span></label>
+            <label class="opt-item"><input type="checkbox" name="q3[]" value="accommodation"><span>Accommodation arrangements</span></label>
+            <label class="opt-item"><input type="checkbox" name="q3[]" value="patient_support"><span>Patient support during stay</span></label>
+            <label class="opt-item"><input type="checkbox" name="q3[]" value="language"><span>Language assistance</span></label>
+            <label class="opt-item"><input type="checkbox" name="q3[]" value="other"><span>Other</span></label>
+          </div>
+        </div>
+        <div class="fb-q">
+          <label class="q-label"><span class="q-num">4.</span> How supported did you feel by the OneCare team throughout your journey?</label>
+          <div class="opt-list">
+            <label class="opt-item"><input type="radio" name="q4" value="very_supported"><span>Very supported</span></label>
+            <label class="opt-item"><input type="radio" name="q4" value="supported"><span>Supported</span></label>
+            <label class="opt-item"><input type="radio" name="q4" value="neutral"><span>Neutral</span></label>
+            <label class="opt-item"><input type="radio" name="q4" value="not_very"><span>Not very supported</span></label>
+          </div>
+        </div>
+        <div class="fb-q">
+          <label class="q-label"><span class="q-num">5.</span> Tell us about your experience with OneCare</label>
+          <input type="text" name="q5" class="fb-input" placeholder="What stood out about the support you received from the OneCare team?">
+        </div>
+      </div>
+      <div class="fb-divider"></div>
+      <div class="fb-section">
+        <div class="fb-q">
+          <label class="q-label"><span class="q-num">6.</span> Would you like to share a short testimonial about your experience with OneCare?</label>
+          <textarea name="q6" class="fb-input" rows="5" placeholder="Your story may help other patients feel confident about choosing OneCare."></textarea>
+        </div>
+        <div class="fb-q">
+          <label class="q-label"><span class="q-num">7.</span> Upload a Video Testimonial <span class="q-tag">(Optional)</span></label>
+          <div class="upload-box">
+            <input type="file" name="video" accept="video/*">
+            <div class="ub-icon">🎥</div>
+            <div class="ub-label">Click to upload a video</div>
+            <div class="ub-hint">Recommended length: under 1 minute · MP4, MOV, AVI</div>
+            <div class="ub-hint" style="margin-top:6px;font-style:italic;">"If you're comfortable, you can record a short video sharing your experience with OneCare."</div>
+          </div>
+        </div>
+      </div>
+      <div class="fb-divider"></div>
+      <div class="fb-section">
+        <label class="consent-row" style="margin-top:14px;">
+          <input type="checkbox" name="consent" value="1" required>
+          <span>I agree that my testimonial (text or video) may be used by OneCare to help other patients understand the services.</span>
+        </label>
+      </div>
+      <button type="submit" class="fb-submit" onclick="submitFeedback(event)">Submit Your Story</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
